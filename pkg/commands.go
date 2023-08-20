@@ -63,3 +63,27 @@ func ListProfiles() {
 		fmt.Println(tokens[0])
 	}
 }
+
+func DeleteProfile(profileName string) {
+	if profileName == "" {
+		fmt.Println("no profile as specified")
+		return
+	}
+
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		log.Println("failed to get user home dir -", err.Error())
+		return
+	}
+
+	rootFolder := path.Join(dirname, folderSuffix)
+	profileName = fmt.Sprintf("%s.json", profileName)
+
+	profilePath := path.Join(rootFolder, profileName)
+
+	if err := os.Remove(profilePath); err != nil {
+		fmt.Println("error deleting profile", err.Error())
+		return
+	}
+
+}

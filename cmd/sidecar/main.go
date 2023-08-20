@@ -20,9 +20,19 @@ func main() {
 			{
 				Name:    "list",
 				Aliases: []string{"ls"},
-				Usage:   "list profiles",
+				Usage:   "List existing profiles",
 				Action: func(cCtx *cli.Context) error {
 					pkg.ListProfiles()
+					return nil
+				},
+			},
+			{
+				Name:      "delete",
+				Aliases:   []string{"rm"},
+				Usage:     "Delete profile",
+				ArgsUsage: "name of the profile",
+				Action: func(cCtx *cli.Context) error {
+					pkg.DeleteProfile(cCtx.Args().First())
 					return nil
 				},
 			},
