@@ -7,9 +7,34 @@ import (
 	"os"
 	"os/exec"
 	"sidecar/pkg"
+
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
+
+	app := &cli.App{
+		Name:  "sidecar",
+		Usage: "Easily inject environment variables",
+		Commands: []*cli.Command{
+			{
+				Name:    "list",
+				Aliases: []string{"ls"},
+				Usage:   "list profiles",
+				Action: func(cCtx *cli.Context) error {
+					pkg.ListProfiles()
+					return nil
+				},
+			},
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func injectMain() {
 	if err := os.Setenv(pkg.LOOKUP_KEY, "SIDECAR"); err != nil {
 		fmt.Println("error setting env", err)
 		return
