@@ -54,6 +54,25 @@ func main() {
 					return nil
 				},
 			},
+
+			{
+				Name:    "add",
+				Aliases: []string{},
+				Usage:   "Add values to profile",
+				Action: func(cCtx *cli.Context) error {
+					pkg.AddToProfile(cCtx.Args().First(), cCtx.Args().Tail()...)
+					return nil
+				},
+			},
+			{
+				Name:    "remove",
+				Aliases: []string{},
+				Usage:   "Remove values to profile",
+				Action: func(cCtx *cli.Context) error {
+					pkg.RemoveFromProfile(cCtx.Args().First(), cCtx.Args().Tail()...)
+					return nil
+				},
+			},
 		},
 	}
 

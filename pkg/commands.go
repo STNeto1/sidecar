@@ -87,6 +87,97 @@ func ShowProfile(profileName string) {
 	}
 }
 
+func AddToProfile(profileName string, entries ...string) {
+	if profileName == "" {
+		fmt.Println("-> no profile was specified")
+		return
+	}
+
+	profiles, err := getContext()
+	if err != nil {
+		fmt.Println("-> failed to get profiles", err.Error())
+		return
+	}
+
+	if !hasProfile(profiles, profileName) {
+		fmt.Println("-> profile does not exists")
+		return
+	}
+
+	profileData := profiles[profileName]
+
+	for _, value := range entries {
+		tokens := strings.Split(value, "=")
+		if len(tokens) != 2 {
+			continue
+		}
+
+		profileData[tokens[0]] = tokens[1]
+	}
+
+	jsonData, err := json.MarshalIndent(profileData, "", " ")
+	if err != nil {
+		fmt.Println("-> failed to serialize new data -", err.Error())
+		return
+	}
+
+	profilePath, err := getProfilePath(profileName)
+	if err != nil {
+		fmt.Println("-> failed to get profile path -", err.Error())
+		return
+	}
+
+	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
+		fmt.Println("-> failed to write to file -", err.Error())
+		return
+	}
+
+	fmt.Println("-> addeded profile")
+}
+
+func RemoveFromProfile(profileName string, entries ...string) {
+	if profileName == "" {
+		fmt.Println("-> no profile was specified")
+		return
+	}
+
+	profiles, err := getContext()
+	if err != nil {
+		fmt.Println("-> failed to get profiles", err.Error())
+		return
+	}
+
+	if !hasProfile(profiles, profileName) {
+		fmt.Println("-> profile does not exists")
+		return
+	}
+
+	profileData := profiles[profileName]
+
+	for _, value := range entries {
+		delete(profileData, value)
+	}
+
+	jsonData, err := json.MarshalIndent(profileData, "", " ")
+	if err != nil {
+		fmt.Println("-> failed to serialize new data -", err.Error())
+		return
+	}
+
+	profilePath, err := getProfilePath(profileName)
+	if err != nil {
+		fmt.Println("-> failed to get profile path -", err.Error())
+		return
+	}
+
+	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
+		fmt.Println("-> failed to write to file -", err.Error())
+		return
+	}
+
+	fmt.Println("-> addeded profile")
+}
+
 func DeleteProfile(profileName string) {
 	if profileName == "" {
 		fmt.Println("-> no profile was specified")
