@@ -18,6 +18,24 @@ func main() {
 		Usage: "Easily inject environment variables",
 		Commands: []*cli.Command{
 			{
+				Name:    "create",
+				Aliases: []string{"c"},
+				Usage:   "Create new profile",
+				Action: func(cCtx *cli.Context) error {
+					pkg.CreateProfile(cCtx.Args().First())
+					return nil
+				},
+			},
+			{
+				Name:    "show",
+				Aliases: []string{"s"},
+				Usage:   "Show profile",
+				Action: func(cCtx *cli.Context) error {
+					pkg.ShowProfile(cCtx.Args().First())
+					return nil
+				},
+			},
+			{
 				Name:    "list",
 				Aliases: []string{"ls"},
 				Usage:   "List existing profiles",
