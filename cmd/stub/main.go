@@ -3,30 +3,16 @@ package main
 import (
 	"fmt"
 	"os"
-	"sidecar/pkg"
-	"time"
+	"strings"
 )
 
 func main() {
-	lookup := os.Getenv(pkg.LOOKUP_KEY)
+	envs := os.Environ()
 
-	if lookup == "" {
-		fmt.Println("no env was set")
-		return
-	}
+	for _, value := range envs {
 
-	fmt.Println(lookup)
-
-	init := 1
-
-	for {
-		if init >= 10 {
-			break
+		if strings.HasPrefix(value, "SIDECAR") {
+			fmt.Println(value)
 		}
-
-		fmt.Println(init)
-		time.Sleep(time.Second)
-
-		init += 1
 	}
 }

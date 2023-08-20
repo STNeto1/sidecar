@@ -1,9 +1,11 @@
 package pkg
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 )
@@ -210,6 +212,56 @@ func DeleteProfile(profileName string) {
 
 }
 
+func Execute(profileName string, command string) {
+	if profileName == "" {
+		fmt.Println("-> no profile was specified")
+		return
+	}
+
+	if command == "" {
+		fmt.Println("-> no command was specified")
+		return
+	}
+
+	profiles, err := getContext()
+	if err != nil {
+		fmt.Println("-> failed to get profiles", err.Error())
+		return
+	}
+
+	if !hasProfile(profiles, profileName) {
+		fmt.Println("-> profile does not exists")
+		return
+	}
+
+	tokens := strings.Split(command, " ")
+
+	profileData := profiles[profileName]
+	for key, value := range profileData {
+		if err := os.Setenv(key, value); err != nil {
+			fmt.Println("-> error setting env", err)
+			return
+		}
+	}
+
+	head, tail := getHeadTail[string](tokens)
+	cmd := exec.Command(head, tail...)
+
+	pipe, _ := cmd.StdoutPipe()
+
+	cmd.Start()
+
+	scanner := bufio.NewScanner(pipe)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		m := scanner.Text()
+
+		fmt.Println(m)
+	}
+
+	cmd.Wait()
+}
+
 func getContext() (Profile, error) {
 	dirname, err := os.UserHomeDir()
 
@@ -282,4 +334,20 @@ func getProfilePath(profileName string) (string, error) {
 
 func getKey(profileName string) string {
 	return fmt.Sprintf("%s.json", profileName)
+}
+
+// assumes that the list has at least one element
+func getHeadTail[K any](data []K) (K, []K) {
+	var head K
+	var tail []K
+
+	for idx, value := range data {
+		if idx == 0 {
+			head = value
+		} else {
+			tail = append(tail, value)
+		}
+	}
+
+	return head, tail
 }

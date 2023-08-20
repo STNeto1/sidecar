@@ -73,6 +73,16 @@ func main() {
 					return nil
 				},
 			},
+
+			{
+				Name:    "execute",
+				Aliases: []string{"exe"},
+				Usage:   "Execute a command with sidecar",
+				Action: func(cCtx *cli.Context) error {
+					pkg.Execute(cCtx.Args().First(), cCtx.Args().Get(1))
+					return nil
+				},
+			},
 		},
 	}
 
