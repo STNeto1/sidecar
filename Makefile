@@ -1,5 +1,5 @@
 _build:
 	go build -o stub ./cmd/stub/main.go
 
-sidebar:
+sidecar:
 	go run ./cmd/sidecar/main.go
