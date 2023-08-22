@@ -3,7 +3,6 @@ package pkg
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -20,31 +19,31 @@ type Profile = map[string]ProfileData
 
 func CreateProfile(profileName string) error {
 	if profileName == "" {
-		return errors.New("no profile was specified")
+		return ErrNoProfileSpecified
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		return errors.New("failed to get profiles")
+		return ErrFailedToGetProfiles
 	}
 
 	if hasProfile(profiles, profileName) {
-		return errors.New("profile already exists")
+		return ErrProfileExists
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		return errors.New("failed to get profile path")
+		return ErrFailedToGetProfilePath
 	}
 
 	var profileData ProfileData
 	jsonData, err := json.Marshal(profileData)
 	if err != nil {
-		return errors.New("failed to serialize new data")
+		return ErrFailedToSerializeData
 	}
 
 	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
-		return errors.New("failed to write to file")
+		return ErrFailedToWriteToFile
 	}
 
 	return nil
@@ -53,7 +52,7 @@ func CreateProfile(profileName string) error {
 func ListProfiles() (Profile, error) {
 	profiles, err := getContext()
 	if err != nil {
-		return nil, errors.New("failed to get profiles")
+		return nil, ErrFailedToGetProfiles
 	}
 
 	return profiles, nil
@@ -61,16 +60,16 @@ func ListProfiles() (Profile, error) {
 
 func ShowProfile(profileName string) (ProfileData, error) {
 	if profileName == "" {
-		return nil, errors.New("no profile was specified")
+		return nil, ErrNoProfileSpecified
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		return nil, errors.New("failed to get profiles")
+		return nil, ErrFailedToGetProfiles
 	}
 
 	if !hasProfile(profiles, profileName) {
-		return nil, errors.New("profile does not exists")
+		return nil, ErrProfileDoesNotExist
 	}
 
 	data := profiles[profileName]
@@ -79,16 +78,16 @@ func ShowProfile(profileName string) (ProfileData, error) {
 
 func AddToProfile(profileName string, entries ...string) error {
 	if profileName == "" {
-		return errors.New("no profile was specified")
+		return ErrNoProfileSpecified
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		return errors.New("failed to get profiles")
+		return ErrFailedToGetProfiles
 	}
 
 	if !hasProfile(profiles, profileName) {
-		return errors.New("profile does not exists")
+		return ErrProfileDoesNotExist
 	}
 
 	profileData := profiles[profileName]
@@ -104,16 +103,16 @@ func AddToProfile(profileName string, entries ...string) error {
 
 	jsonData, err := json.MarshalIndent(profileData, "", " ")
 	if err != nil {
-		return errors.New("failed to serialize new data")
+		return ErrFailedToSerializeData
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		return errors.New("failed to get profile path")
+		return ErrFailedToGetProfilePath
 	}
 
 	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
-		return errors.New("failed to write to file")
+		return ErrFailedToWriteToFile
 	}
 
 	return nil
@@ -121,16 +120,16 @@ func AddToProfile(profileName string, entries ...string) error {
 
 func RemoveFromProfile(profileName string, entries ...string) error {
 	if profileName == "" {
-		return errors.New("no profile was specified")
+		return ErrNoProfileSpecified
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		return errors.New("failed to get profiles")
+		return ErrFailedToGetProfiles
 	}
 
 	if !hasProfile(profiles, profileName) {
-		return errors.New("profile does not exists")
+		return ErrProfileDoesNotExist
 	}
 
 	profileData := profiles[profileName]
@@ -141,16 +140,16 @@ func RemoveFromProfile(profileName string, entries ...string) error {
 
 	jsonData, err := json.MarshalIndent(profileData, "", " ")
 	if err != nil {
-		return errors.New("failed to serialize new data")
+		return ErrFailedToSerializeData
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		return errors.New("failed to get profile path")
+		return ErrFailedToGetProfilePath
 	}
 
 	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
-		return errors.New("failed to write to file")
+		return ErrFailedToWriteToFile
 	}
 
 	return nil
@@ -158,25 +157,25 @@ func RemoveFromProfile(profileName string, entries ...string) error {
 
 func DeleteProfile(profileName string) error {
 	if profileName == "" {
-		return errors.New("no profile was specified")
+		return ErrNoProfileSpecified
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		return errors.New("failed to get profiles")
+		return ErrFailedToGetProfiles
 	}
 
 	if !hasProfile(profiles, profileName) {
-		return errors.New("profile does not exists")
+		return ErrProfileDoesNotExist
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		return errors.New("failed to get profile path")
+		return ErrFailedToGetProfilePath
 	}
 
 	if err := os.Remove(profilePath); err != nil {
-		return errors.New("failed to delete profile")
+		return ErrFailedToDeleteProfile
 	}
 
 	return nil
@@ -184,20 +183,20 @@ func DeleteProfile(profileName string) error {
 
 func Execute(profileName string, command string) error {
 	if profileName == "" {
-		return errors.New("no profile was specified")
+		return ErrNoProfileSpecified
 	}
 
 	if command == "" {
-		return errors.New("no command was specified")
+		return ErrNoCommandSpecified
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		return errors.New("failed to get profiles")
+		return ErrFailedToGetProfiles
 	}
 
 	if !hasProfile(profiles, profileName) {
-		return errors.New("profile does not exists")
+		return ErrProfileDoesNotExist
 	}
 
 	tokens := strings.Split(command, " ")
@@ -205,7 +204,7 @@ func Execute(profileName string, command string) error {
 	profileData := profiles[profileName]
 	for key, value := range profileData {
 		if err := os.Setenv(key, value); err != nil {
-			return errors.New("error setting env")
+			return ErrFailedToSetEnv
 		}
 	}
 
