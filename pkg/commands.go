@@ -3,11 +3,14 @@ package pkg
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 const folderSuffix string = ".sidecar"
@@ -15,95 +18,77 @@ const folderSuffix string = ".sidecar"
 type ProfileData = map[string]string
 type Profile = map[string]ProfileData
 
-func CreateProfile(profileName string) {
+func CreateProfile(profileName string) error {
 	if profileName == "" {
-		fmt.Println("-> no profile was specified")
-		return
+		return errors.New("no profile was specified")
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles", err.Error())
-		return
+		return errors.New("failed to get profiles")
 	}
 
 	if hasProfile(profiles, profileName) {
-		fmt.Println("-> profile already exists")
-		return
+		return errors.New("profile already exists")
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		fmt.Println("-> failed to get profile path -", err.Error())
-		return
+		return errors.New("failed to get profile path")
 	}
 
 	var profileData ProfileData
 	jsonData, err := json.Marshal(profileData)
 	if err != nil {
-		fmt.Println("-> failed to serialize new data -", err.Error())
-		return
+		return errors.New("failed to serialize new data")
 	}
 
 	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
-		fmt.Println("-> failed to write to file -", err.Error())
-		return
+		return errors.New("failed to write to file")
 	}
 
-	fmt.Println("-> created new profile")
+	return nil
 }
 
-func ListProfiles() {
+func ListProfiles() (Profile, error) {
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles -", err.Error())
-		return
+		return nil, errors.New("failed to get profiles")
 	}
 
-	for key := range profiles {
-		fmt.Println(fmt.Sprintf("-> %s", key))
-	}
+	return profiles, nil
 }
 
-func ShowProfile(profileName string) {
+func ShowProfile(profileName string) (ProfileData, error) {
 	if profileName == "" {
-		fmt.Println("-> no profile was specified")
-		return
+		return nil, errors.New("no profile was specified")
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles", err.Error())
-		return
+		return nil, errors.New("failed to get profiles")
 	}
 
 	if !hasProfile(profiles, profileName) {
-		fmt.Println("-> profile does not exists")
-		return
+		return nil, errors.New("profile does not exists")
 	}
 
 	data := profiles[profileName]
-	fmt.Println(fmt.Sprintf("===== %s =====", profileName))
-	for key, value := range data {
-		fmt.Println(fmt.Sprintf("-> %s: %s", key, value))
-	}
+	return data, nil
 }
 
-func AddToProfile(profileName string, entries ...string) {
+func AddToProfile(profileName string, entries ...string) error {
 	if profileName == "" {
-		fmt.Println("-> no profile was specified")
-		return
+		return errors.New("no profile was specified")
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles", err.Error())
-		return
+		return errors.New("failed to get profiles")
 	}
 
 	if !hasProfile(profiles, profileName) {
-		fmt.Println("-> profile does not exists")
-		return
+		return errors.New("profile does not exists")
 	}
 
 	profileData := profiles[profileName]
@@ -119,39 +104,33 @@ func AddToProfile(profileName string, entries ...string) {
 
 	jsonData, err := json.MarshalIndent(profileData, "", " ")
 	if err != nil {
-		fmt.Println("-> failed to serialize new data -", err.Error())
-		return
+		return errors.New("failed to serialize new data")
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		fmt.Println("-> failed to get profile path -", err.Error())
-		return
+		return errors.New("failed to get profile path")
 	}
 
 	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
-		fmt.Println("-> failed to write to file -", err.Error())
-		return
+		return errors.New("failed to write to file")
 	}
 
-	fmt.Println("-> addeded profile")
+	return nil
 }
 
-func RemoveFromProfile(profileName string, entries ...string) {
+func RemoveFromProfile(profileName string, entries ...string) error {
 	if profileName == "" {
-		fmt.Println("-> no profile was specified")
-		return
+		return errors.New("no profile was specified")
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles", err.Error())
-		return
+		return errors.New("failed to get profiles")
 	}
 
 	if !hasProfile(profiles, profileName) {
-		fmt.Println("-> profile does not exists")
-		return
+		return errors.New("profile does not exists")
 	}
 
 	profileData := profiles[profileName]
@@ -162,76 +141,63 @@ func RemoveFromProfile(profileName string, entries ...string) {
 
 	jsonData, err := json.MarshalIndent(profileData, "", " ")
 	if err != nil {
-		fmt.Println("-> failed to serialize new data -", err.Error())
-		return
+		return errors.New("failed to serialize new data")
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		fmt.Println("-> failed to get profile path -", err.Error())
-		return
+		return errors.New("failed to get profile path")
 	}
 
 	if err := os.WriteFile(profilePath, jsonData, 0666); err != nil {
-		fmt.Println("-> failed to write to file -", err.Error())
-		return
+		return errors.New("failed to write to file")
 	}
 
-	fmt.Println("-> addeded profile")
+	return nil
 }
 
-func DeleteProfile(profileName string) {
+func DeleteProfile(profileName string) error {
 	if profileName == "" {
-		fmt.Println("-> no profile was specified")
-		return
+		return errors.New("no profile was specified")
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles", err.Error())
-		return
+		return errors.New("failed to get profiles")
 	}
 
 	if !hasProfile(profiles, profileName) {
-		fmt.Println("-> profile does not exists")
-		return
+		return errors.New("profile does not exists")
 	}
 
 	profilePath, err := getProfilePath(profileName)
 	if err != nil {
-		fmt.Println("-> failed to get profile path -", err.Error())
-		return
+		return errors.New("failed to get profile path")
 	}
 
 	if err := os.Remove(profilePath); err != nil {
-		fmt.Println("-> failed to delete profile -", err.Error())
-		return
+		return errors.New("failed to delete profile")
 	}
 
-	fmt.Println("-> deleted profile")
-
+	return nil
 }
 
-func Execute(profileName string, command string) {
+func Execute(profileName string, command string) error {
 	if profileName == "" {
-		fmt.Println("-> no profile was specified")
-		return
+		return errors.New("no profile was specified")
 	}
 
 	if command == "" {
-		fmt.Println("-> no command was specified")
-		return
+		return errors.New("no command was specified")
 	}
 
 	profiles, err := getContext()
 	if err != nil {
-		fmt.Println("-> failed to get profiles", err.Error())
-		return
+		return errors.New("failed to get profiles")
 	}
 
 	if !hasProfile(profiles, profileName) {
-		fmt.Println("-> profile does not exists")
-		return
+		return errors.New("profile does not exists")
 	}
 
 	tokens := strings.Split(command, " ")
@@ -239,8 +205,7 @@ func Execute(profileName string, command string) {
 	profileData := profiles[profileName]
 	for key, value := range profileData {
 		if err := os.Setenv(key, value); err != nil {
-			fmt.Println("-> error setting env", err)
-			return
+			return errors.New("error setting env")
 		}
 	}
 
@@ -256,10 +221,12 @@ func Execute(profileName string, command string) {
 	for scanner.Scan() {
 		m := scanner.Text()
 
-		fmt.Println(m)
+		log.Info().Msg(m)
 	}
 
 	cmd.Wait()
+
+	return nil
 }
 
 func getContext() (Profile, error) {
@@ -285,14 +252,12 @@ func getContext() (Profile, error) {
 
 		fileBytes, err := os.ReadFile(path.Join(rootFolder, e.Name()))
 		if err != nil {
-			fmt.Println("error reading file", e.Name(), " - ", err.Error())
 			continue
 		}
 
 		var profileData ProfileData
 		err = json.Unmarshal(fileBytes, &profileData)
 		if err != nil {
-			fmt.Println("error parsing file", e.Name(), " - ", err.Error())
 			continue
 		}
 
